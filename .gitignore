@@ -1,0 +1,5 @@
+.env
+.venv
+*.pyc
+src/__pycache__
+data
