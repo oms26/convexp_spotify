@@ -36,7 +36,7 @@ class SpotifyService:
         self.token = response_dict["access_token"]
         self.headers = {"Authorization": "Bearer " + self.token}
 
-    def get_songs_from_artist_name(self, artist_name: str) -> pd.DataFrame:
+    def get_songs_from_artist_name(self, artist_name: str) -> pd.Series:
 
         params = {
             'q': f"artist:{artist_name}",
@@ -46,7 +46,7 @@ class SpotifyService:
         search_endpoint_url = base_url + "/search"
 
         track_ids = []
-        track_names = []
+        # track_names = []
         while search_endpoint_url:
             
             response = requests.get(search_endpoint_url, params=params, headers=self.headers, verify=False)
@@ -54,17 +54,14 @@ class SpotifyService:
             for item in response_dict["tracks"]["items"]:
                 track_id = item['id']
                 track_ids.append(track_id)
-                track_name = item['name']
-                track_names.append(track_name)
+                # track_name = item['name']
+                # track_names.append(track_name)
             search_endpoint_url = response_dict["tracks"]['next']
             params = {} # reinitialise query params to empty dict, as full query URL given in 'next' key
 
-        df_tracks = pd.DataFrame({
-            'track_id': track_ids,
-            'track_name': track_names,
-        })
+        s_tracks = pd.Series(track_ids, name='id')
         
-        return df_tracks
+        return s_tracks
     
     def get_audio_feats_from_track_id(self, track_id: str) -> pd.DataFrame:
         query_url = base_url + f"/audio-features/{track_id}"
@@ -100,6 +97,21 @@ class SpotifyService:
         audio_features_df = convert_json_to_df(audio_features)
 
         return audio_features_df
+    
+    def get_popularity_from_track_id(self, track_id: str) -> int:
+
+        query_url = base_url + f'/tracks/{track_id}'
+
+        response = requests.get(
+            url=query_url,
+            headers=self.headers,
+            verify=False,
+        )
+
+        response_dict = json.loads(response.content)
+        popularity = response_dict['popularity']
+
+        return popularity
         
 ####################### NOT USED CURRENTLY ##############################
     
