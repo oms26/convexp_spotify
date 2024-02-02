@@ -1,17 +1,15 @@
-import os
 import json
-import numpy as np 
 import pandas as pd 
 import requests 
 import base64
-from typing import Dict, List, Tuple
+from typing import List
 
-from src.constants import client_id, client_secret, token_endpoint_url, base_url
+from src.constants import CLIENT_ID, CLIENT_SECRET, token_endpoint_url, base_url
 from src.utils import convert_json_to_df
 
 class SpotifyService:
     def __init__(self):
-        auth_string = client_id + ":" + client_secret
+        auth_string = CLIENT_ID + ":" + CLIENT_SECRET
         auth_bytes = auth_string.encode("utf-8")
         auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
 
@@ -198,13 +196,6 @@ class SpotifyService:
         song_ids = [song['id'] for song in response_dict['items']]
 
         return song_ids
-    
-
-
-
-
-
-
 
     def get_top_tracks_from_artist_id(self, artist_id: str) -> pd.DataFrame:
         """
@@ -230,9 +221,4 @@ class SpotifyService:
         top_tracks_df = pd.DataFrame(top_tracks_list, columns=['track_title', 'album_title', 'popularity'])
 
         return top_tracks_df
-
-
-
-
-
 

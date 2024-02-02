@@ -1,10 +1,5 @@
-import os
-import json
-import numpy as np 
 import pandas as pd 
-import requests 
-import base64
-from typing import Dict, List, Tuple
+from typing import List
 
 def convert_json_to_df(data: List) -> pd.DataFrame:
     """
