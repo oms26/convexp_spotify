@@ -20,3 +20,4 @@ def split_into_batches(data: List, batch_size: int = 100) -> List:
     useful for src.api_requests.get_audio_feats_from_many_track_ids
     """
     return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
+

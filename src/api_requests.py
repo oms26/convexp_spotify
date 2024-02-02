@@ -59,6 +59,7 @@ class SpotifyService:
             search_endpoint_url = response_dict["tracks"]['next']
             params = {} # reinitialise query params to empty dict, as full query URL given in 'next' key
 
+        track_ids = list(set(track_ids))
         s_tracks = pd.Series(track_ids, name='id')
         
         return s_tracks
@@ -95,6 +96,16 @@ class SpotifyService:
         audio_features = features_dict['audio_features']
 
         audio_features_df = convert_json_to_df(audio_features)
+
+        return audio_features_df
+    
+    def get_audio_feats_full(self, batches: List) -> pd.DataFrame:
+        df_list = []
+        for batch in batches:
+            batch_df = self.get_audio_feats_from_many_track_ids(batch)
+            df_list.append(batch_df)
+
+        audio_features_df = pd.concat(df_list)
 
         return audio_features_df
     
