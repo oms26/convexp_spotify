@@ -1,0 +1,13 @@
+name: spotify_env
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - python-dotenv=0.21.0
+  - requests=2.31.0
+  - matplotlib=3.8.0
+  - matplotlib-inline=0.1.6
+  - ipykernel=6.28.0
+  - pip
+  - pip:
+    - seaborn==0.13.2
