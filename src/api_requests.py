@@ -8,7 +8,17 @@ from src.constants import CLIENT_ID, CLIENT_SECRET, token_endpoint_url, base_url
 from src.utils import convert_json_to_df
 
 class SpotifyService:
+    """
+    Class holding functions for sending HTTP requests to Spotify Web API. 
+    Functions include retrieving an artist's songs and their audio features.
+    """
     def __init__(self):
+        """
+        Attributes:
+            self.token: access token for Spotify API access
+            self.headers: authorisation header to authorise HTTP requests
+        """
+
         auth_string = CLIENT_ID + ":" + CLIENT_SECRET
         auth_bytes = auth_string.encode("utf-8")
         auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
@@ -34,8 +44,18 @@ class SpotifyService:
         self.token = response_dict["access_token"]
         self.headers = {"Authorization": "Bearer " + self.token}
 
-    def get_songs_from_artist_name(self, artist_name: str) -> pd.Series:
+    def get_songs_from_artist_name(
+            self, 
+            artist_name: str,
+            ) -> pd.Series:
+        """
+        Function to query search endpoint for songs from chosen artist
 
+        Args:
+            - artist_name (str): Name of artist to get songs from.
+        Returns:
+            - s_tracks (pd.Series): track IDs of all artist's tracks
+        """
         params = {
             'q': f"artist:{artist_name}",
             'type': 'track',
@@ -44,7 +64,8 @@ class SpotifyService:
         search_endpoint_url = base_url + "/search"
 
         track_ids = []
-        # track_names = []
+        
+        # as each request gives only one page of track results, loop through all pages to get all songs
         while search_endpoint_url:
             
             response = requests.get(search_endpoint_url, params=params, headers=self.headers, verify=False)
@@ -52,8 +73,6 @@ class SpotifyService:
             for item in response_dict["tracks"]["items"]:
                 track_id = item['id']
                 track_ids.append(track_id)
-                # track_name = item['name']
-                # track_names.append(track_name)
             search_endpoint_url = response_dict["tracks"]['next']
             params = {} # reinitialise query params to empty dict, as full query URL given in 'next' key
 
@@ -62,7 +81,19 @@ class SpotifyService:
         
         return s_tracks
     
-    def get_audio_feats_from_track_id(self, track_id: str) -> pd.DataFrame:
+    def get_audio_feats_from_track_id(
+            self, 
+            track_id: str,
+            ) -> pd.DataFrame:
+        """
+        Function to get audio features from a single track ID endpoint.
+
+        Args:
+            - track_id (str): ID of track
+        Returns:
+            - audio_features_df (pd.DataFrame): dataframe of single track ID and features including popularity, danceability, etc.
+        """
+        
         query_url = base_url + f"/audio-features/{track_id}"
         response = requests.get(
             url=query_url,
@@ -75,7 +106,20 @@ class SpotifyService:
 
         return audio_features_df
     
-    def get_audio_feats_from_many_track_ids(self, track_ids: List) -> pd.DataFrame:
+    def get_audio_feats_from_many_track_ids(
+            self, 
+            track_ids: List[str],
+            ) -> pd.DataFrame:
+        """
+        Function to send GET request for audio features from a list of track IDs.
+        Same functionality as get_audio_feats_from_track_id but only needs to send single request for many songs.
+        This function is called by get_audio_feats_full
+
+        Args:
+            - track_ids (List[str]): IDs of several tracks
+        Returns:
+            - audio_features_df (pd.DataFrame): dataframe of several track IDs and features including popularity, danceability, etc.
+        """
 
         query_url = base_url + f"/audio-features"
 
@@ -97,7 +141,20 @@ class SpotifyService:
 
         return audio_features_df
     
-    def get_audio_feats_full(self, batches: List) -> pd.DataFrame:
+    def get_audio_feats_full(
+            self, 
+            batches: List,
+            ) -> pd.DataFrame:
+        """
+        Function to get audio features from a list of list of track IDs.
+        Performs GET requests by calling get_audio_feats_from_many_track_ids
+
+        Args:
+            - batches (List): nested list of track IDs of all artist's tracks
+        Returns:
+            - audio_features_df (pd.DataFrame): dataframe of all artist's track IDs and features including popularity, danceability, etc.
+        """
+        
         df_list = []
         for batch in batches:
             batch_df = self.get_audio_feats_from_many_track_ids(batch)
@@ -107,8 +164,19 @@ class SpotifyService:
 
         return audio_features_df
     
-    def get_popularity_from_track_id(self, track_id: str) -> int:
+    def get_popularity_from_track_id(
+            self, 
+            track_id: str,
+            ) -> int:
+        """
+        Function to get popularity from a single track ID.
 
+        Args:
+            - track_id (str): ID of track
+        Returns:
+            - popularity (int): popularity of song
+        """
+        
         query_url = base_url + f'/tracks/{track_id}'
 
         response = requests.get(
@@ -122,103 +190,3 @@ class SpotifyService:
 
         return popularity
         
-####################### NOT USED CURRENTLY ##############################
-    
-    def get_artist_id_from_name(self, artist_name: str) -> str:
-
-        params = {
-            'q': artist_name,
-            'type': 'artist',
-            'limit': 1
-        }
-
-        search_endpoint_url = base_url + "/search"
-
-        response = requests.get(
-            url=search_endpoint_url,
-            params=params,
-            headers=self.headers,
-            verify=False,
-        )
-
-        response_dict = json.loads(response.content)
-        artist_items = response_dict["artists"]["items"]
-
-        if not artist_items:
-            print(f"Artist with name: {artist_name} does not exist...")
-            artist_id = None
-        else:
-            artist = artist_items[0]
-            artist_id = artist["id"]
-
-        return artist_id
-    
-    def get_album_ids_from_artist_id(self, artist_id: str, limit: int = 50) -> List:
-
-        params = {
-            "include_groups": "album,single",
-            "limit": limit,
-        }
-
-        artists_endpoint_url = base_url + "/artists"
-        query_url = artists_endpoint_url + f'/{artist_id}/albums'
-
-        response = requests.get(
-            url=query_url,
-            params=params,
-            headers=self.headers,
-            verify=False,
-        ) 
-
-        response_dict = json.loads(response.content)
-
-        album_ids = [album['id'] for album in response_dict['items']]
-
-        return album_ids
-    
-    def get_song_ids_from_album_id(self, album_id: str, limit: int = 50) -> List:
-        albums_endpoint_url = base_url + "/albums"
-        query_url = albums_endpoint_url + f"/{album_id}/tracks"
-
-        params = {
-            'limit': limit
-        }
-
-        response = requests.get(
-            url=query_url,
-            params=params,
-            headers=self.headers,
-            verify=False,
-        ) 
-
-        response_dict = json.loads(response.content)
-
-        song_ids = [song['id'] for song in response_dict['items']]
-
-        return song_ids
-
-    def get_top_tracks_from_artist_id(self, artist_id: str) -> pd.DataFrame:
-        """
-        This request can be used in initial summary of artist
-        """
-        artists_endpoint_url = base_url + "/artists"
-        query_url = artists_endpoint_url + f'/{artist_id}/top-tracks'
-
-        params = {
-            'market': 'US',
-        }
-
-        response = requests.get(
-            url=query_url,
-            params=params,
-            headers=self.headers,
-            verify=False,
-        ) 
-
-        response_dict = json.loads(response.content)
-
-        top_tracks_list = [(track['name'], track['album']['name'], track['popularity']) for track in response_dict['tracks']]
-        top_tracks_df = pd.DataFrame(top_tracks_list, columns=['track_title', 'album_title', 'popularity'])
-
-        return top_tracks_df
-

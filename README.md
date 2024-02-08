@@ -15,9 +15,9 @@ To create your virtual environment, in the project root directory, run:
 `conda env create -f environment.yml`
 
 ### Environment Variables
-Replace the CLIENT_ID and CLIENT_SECRET environment variables in .env.example with your client ID and client secret from your Spotify app. If you have SSL certification required that blocks sending HTTP requests, keep the PYTHONWARNINGS environment variable, otherwise remove it.
+Replace the CLIENT_ID and CLIENT_SECRET environment variables in .env.example with your client ID and client secret from your Spotify app.
 
 Rename .env.example to .env
 
 ## Usage
-`main.ipynb` is the Jupyter notebook to run. This file uses functions located in `src`
+`main.ipynb` is the Jupyter notebook to run. This file uses functions located in `src`.
